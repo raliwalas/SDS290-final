@@ -1,0 +1,147 @@
+---
+title: "Mini Project 2"
+author: "Rachel Aliwalas"
+date: "12/2/2021"
+output: pdf_document
+---
+
+```{r, include=FALSE, wanring=FALSE}
+library(tidyverse)
+library(readr)
+
+mp2_data <- read_csv("/home/rba/SDS290/MP2/MiniProject2.csv")
+```
+
+
+```{r}
+clean_data <- mp2_data %>%
+  slice(3:79) %>% 
+  select(stayed_longer, familiarity, danceability, song) %>% 
+  filter(danceability != "NA")
+```
+
+
+#exploring data
+
+```{r}
+qplot(x = song, y = as.numeric(danceability), data = clean_data, geom = "boxplot") + labs(x = "Speed of Song", y = "Danceability", title = "Figure 1: Boxplots of the Danceability of across the Song's BPM")
+```
+
+```{r}
+ggplot(clean_data, aes(x = interaction(song, familiarity), y = danceability)) + 
+  geom_boxplot()#THIS LOOKS WACKED LMAO
+```
+
+```{r}
+#ggplot(clean_data, aes(x = song, y = danceability, fill = familiarity)) +
+ # geom_boxplot()
+```
+
+
+```{r}
+ggplot(clean_data, aes(x = song, y = danceability, color = familiarity)) +
+  geom_point()
+```
+
+
+```{r}
+ds <- clean_data %>% 
+  group_by(as.factor(song)) %>% 
+  mutate(danceability = as.numeric(danceability)) %>% 
+  summarize(n = n(), 
+            m = mean(danceability),
+            sd = sd(danceability))
+ds
+
+ds %>% 
+  ungroup() %>%
+  summarise(max(sd)/min(sd))
+```
+
+difference in sd's are small enough for us to continue
+
+
+# Formal Analysis
+
+Run two-way ANOVA without the interaction term using the original data.
+
+null hyp: the group means are the same
+alt hyp: group means are different
+
+
+```{r}
+mod1 <- lm(danceability ~ song + familiarity, data = clean_data)
+
+anova(mod1)
+```
+
+
+## Interactions
+
+Check for interactions: Create an interaction plot.
+
+```{r}
+ggplot(clean_data, aes(x = song, y = danceability, 
+                    group = familiarity, 
+                    color = familiarity)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = 0)
+```
+
+Conduct a two-way ANOVA
+
+```{r}
+mod2 <- lm(danceability ~ song * familiarity, data = clean_data)
+
+anova(mod2)
+```
+
+
+song and dancability - there are statistically significant differences in group means
+familiarity and danceability - there are statistically significant differences in group means
+
+interaction is insignificant
+
+
+
+# Residual Analysis 
+
+Check conditions on the residuals
+
+```{r}
+qplot(x = mod2$residuals, bins = 5)
+plot(mod2, which = 2)
+plot(mod2, which = 1)
+```
+
+# Confidence intervals and effect sizes
+
+```{r} 
+#need to fix for our own values
+SD = sqrt(36.25) 
+t = qt(.975, 8)
+
+#Conditional averages
+mean_B12_antiNO <- 22 - 19
+
+mean_B12_antiYES <- 54 - 3
+
+LL_B12_antiNO = mean_B12_antiNO - SD*t*sqrt(1/3+1/3)
+UL_B12_antiNO = mean_B12_antiNO + SD*t*sqrt(1/3+1/3)
+
+LL_B12_antiYES = mean_B12_antiYES - SD*t*sqrt(1/3+1/3)
+UL_B12_antiYES = mean_B12_antiYES + SD*t*sqrt(1/3+1/3)
+
+LL_B12_antiNO
+UL_B12_antiNO
+
+LL_B12_antiYES
+UL_B12_antiYES
+```
+
+```{r}
+mean_B12_antiNO/SD
+mean_B12_antiYES/SD
+```
+
+
