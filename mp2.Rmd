@@ -40,7 +40,7 @@ ggplot(clean_data, aes(x = interaction(song, familiarity), y = danceability)) +
 
 ```{r}
 ggplot(clean_data, aes(x = song, y = danceability, color = familiarity)) +
-  geom_point()
+  geom_point() + geom_jitter()
 ```
 
 
@@ -81,9 +81,9 @@ anova(mod1)
 Check for interactions: Create an interaction plot.
 
 ```{r}
-ggplot(clean_data, aes(x = song, y = danceability, 
-                    group = familiarity, 
-                    color = familiarity)) +
+ggplot(clean_data, aes(x = familiarity, y = danceability, 
+                    group = song, 
+                    color = song)) +
   geom_point() +
   geom_smooth(method = "lm", se = 0)
 ```
